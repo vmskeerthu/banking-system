@@ -1,7 +1,9 @@
 package com.banking.user_account_service.controller;
 
 import com.banking.user_account_service.DTO.AccountResponse;
+import com.banking.user_account_service.DTO.AuthResponse;
 import com.banking.user_account_service.DTO.BalanceUpdateRequest;
+import com.banking.user_account_service.DTO.LoginRequest;
 import com.banking.user_account_service.entity.Account;
 import com.banking.user_account_service.entity.User;
 import com.banking.user_account_service.service.AccountService;
@@ -27,40 +29,34 @@ public class UserAccountController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
     }
     @PostMapping("/users/login")
-    public ResponseEntity<String> login(@RequestBody User loginRequest){
-        String jwtToken=userService.authenticateUser(loginRequest.getEmail(),loginRequest.getPasswordHash());
-        return ResponseEntity.ok(jwtToken);
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest loginRequest){
+        String jwtToken=userService.authenticateUser(loginRequest.getEmail(),loginRequest.getPassword());
+        return ResponseEntity.ok(new AuthResponse(jwtToken));
     }
-    @GetMapping("/accounts/{accountId}/balance")
-//    public ResponseEntity<Double> getAccountBalance(@PathVariable Long accountId) {
-//        double balance = accountService.getAccountById(accountId).getBalance();
-//        return ResponseEntity.ok(balance);
-//    }
-    public ResponseEntity<AccountResponse> getAccountBalance(@PathVariable Long accountId) {
-        Account account = accountService.getAccountById(accountId);
-        AccountResponse response = new AccountResponse(account.getId(), account.getBalance());
+    @GetMapping("/accounts/{accountNumber}/balance")
+    public ResponseEntity<AccountResponse> getAccountBalance(@PathVariable String accountNumber) {
+        Account account = accountService.getAccountByNumber(accountNumber);
+        AccountResponse response = new AccountResponse(account.getAccountNumber(), account.getBalance());
         return ResponseEntity.ok(response);
     }
+    @GetMapping("/accounts/{accountNumber}/user-id")
+    public ResponseEntity<Long> getUserIdByAccountNumber(@PathVariable String accountNumber) {
+        Long userId = accountService.getUserIdByAccountNumber(accountNumber);
+        return ResponseEntity.ok(userId);
+    }
 
-    @GetMapping("/accounts/{accountId}")
-    public ResponseEntity<Account> getAccountDetails(@PathVariable Long accountId){
-        Account account=accountService.getAccountById(accountId);
+    @GetMapping("/accounts/{accountNumber}")
+    public ResponseEntity<Account> getAccountDetails(@PathVariable String accountNumber){
+        Account account=accountService.getAccountByNumber(accountNumber);
         return ResponseEntity.ok(account);
     }
-    @PutMapping("/accounts/{accountId}/balance")
-    public ResponseEntity<Account> updateBalance(@RequestBody BalanceUpdateRequest request) {
-        Account updatedAccount = accountService.updateBalance(request.getAccountId(),request.getNewBalance());
+    @PutMapping("/accounts/{accountNumber}/balance")
+    public ResponseEntity<Account> updateBalance(@PathVariable String accountNumber, @RequestBody BalanceUpdateRequest request) {
+        System.out.println("Updating balance for accountNumber={} with delta={}"+ accountNumber+ request.getDelta());
+
+        Account updatedAccount = accountService.updateBalanceByNumber(accountNumber,request.getDelta());
         return ResponseEntity.ok(updatedAccount);
     }
-//    @PostMapping("/accounts/deposit")
-//    public ResponseEntity<Account> deposit(@RequestBody TransactionRequest transactionRequest){
-//        Account updatedAccount=accountService.deposit(transactionRequest.getAccountId(),transactionRequest.getAmount());
-//        return ResponseEntity.ok(updatedAccount);
-//    }
-//    @PostMapping("/accounts/withdraw")
-//    public ResponseEntity<Account> withdraw(@RequestBody TransactionRequest transactionRequest){
-//        Account updatedAccount=accountService.withdrawal(transactionRequest.getAccountId(), transactionRequest.getAmount());
-//        return ResponseEntity.ok(updatedAccount);
-//    }
+
 
 }

@@ -15,7 +15,13 @@ import java.util.List;
  * @author Keerthana
  **/
 @Entity
-@Table(name="users")
+@Table(
+        name = "users",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = "email"),           // email must be unique
+                @UniqueConstraint(columnNames = "phoneNumber")      // optional: phone must be unique
+        }
+)
 @Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -24,10 +30,25 @@ public class User {
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, length = 50)
     private String name;
+
+    @Column(nullable = false, unique = true, length = 150)
     private String email;
+
+    @Column(nullable = false)
     private String passwordHash;
-  private AccountType accountType;
+
+    @Column(length = 255)
+    private String address;
+
+    @Column(length = 15, unique = true, nullable = false)
+    private String phoneNumber;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AccountType accountType;
+
     @OneToMany(mappedBy="user",cascade=CascadeType.ALL)
     List<Account> accounts=new ArrayList<>();
 

@@ -9,6 +9,6 @@ import lombok.*;
 @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class BalanceUpdateRequest {
-    private Long accountId;
-    private double newBalance;
+//    private String accountNumber;
+    private double delta;
 }

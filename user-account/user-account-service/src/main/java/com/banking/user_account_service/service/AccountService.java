@@ -5,6 +5,7 @@ import com.banking.user_account_service.repository.AccountRepository;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Keerthana
@@ -18,29 +19,43 @@ public class AccountService {
     public Account getAccountById(Long accountId){
         return accountRepository.findById(accountId).orElseThrow(()->new RuntimeException("Account not found"));
     }
-//    public Account deposit(Long accountId,double amount){
+    public Account getAccountByNumber(String accountNumber) {
+        return accountRepository.findByAccountNumber(accountNumber)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+    }
+    public Account updateBalanceById(Long accountId, double delta) {
+        Account account = getAccountById(accountId);
+        return applyBalanceChange(account, delta);
+    }
+@Transactional
+    public Account updateBalanceByNumber(String accountNumber, double delta) {
+        Account account = getAccountByNumber(accountNumber);
+        return applyBalanceChange(account, delta);
+    }
+    public Long getUserIdByAccountNumber(String accountNumber) {
+        return accountRepository.findUserIdByAccountNumber(accountNumber)
+                .orElseThrow(() -> new RuntimeException("Account not found for account number: " + accountNumber));
+    }
+
+
+    private Account applyBalanceChange(Account account, double delta) {
+        double newBalance = account.getBalance() + delta;
+        if (newBalance < 0) {
+            throw new RuntimeException("Insufficient funds");
+        }
+        account.setBalance(newBalance);
+        return accountRepository.save(account);
+    }
+
+//    public Account updateBalance(Long accountId, double delta) {
 //        Account account = getAccountById(accountId);
-//        account.setBalance(amount+account.getBalance());
-//        Account updated=accountRepository.save(account);
-//        kafkaTemplate.send("account.updated","Deposit to"+account.getAccountNumber());
-//        return updated;
-//    }
-//    public Account withdrawal(Long accountId, double amount){
-//        Account account=getAccountById(accountId);
-//        if(account.getBalance()<amount){
+//        double newBalance = account.getBalance() + delta;
+//
+//        if (newBalance < 0) {
 //            throw new RuntimeException("Insufficient funds");
 //        }
-//        account.setBalance(account.getBalance()-amount);
-//        Account updated=accountRepository.save(account);
-//        kafkaTemplate.send("account.updated","Withdrawal to"+account.getAccountNumber());
-//        return updated;
 //
-//
+//        account.setBalance(newBalance);
+//        return accountRepository.save(account);
 //    }
-public Account updateBalance(Long accountId, double newBalance) {
-    Account account = getAccountById(accountId);
-    account.setBalance(newBalance);
-    return accountRepository.save(account);
-}
-
 }

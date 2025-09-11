@@ -16,8 +16,9 @@ public class TransactionController {
     private final TransactionService transactionService;
 
     @PostMapping
-    public ResponseEntity<Transaction> process(@RequestBody TransactionRequest request) {
-        Transaction transaction = transactionService.processTransaction(request);
+    public ResponseEntity<Transaction> process(@RequestBody TransactionRequest request,
+                                               @RequestHeader("Authorization") String authHeader) {
+        Transaction transaction = transactionService.processTransaction(request,authHeader);
         return ResponseEntity.ok(transaction);
     }
 }

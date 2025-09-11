@@ -12,6 +12,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class BalanceUpdateRequest {
-    private Long accountId;
-    private double newBalance;
+//    private Long accountId;
+//private String accountNumber;
+    private double delta;
 }

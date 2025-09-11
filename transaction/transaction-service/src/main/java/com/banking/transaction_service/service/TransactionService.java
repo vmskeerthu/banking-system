@@ -20,59 +20,61 @@ public class TransactionService {
     private final AccountClient accountClient;
     private final KafkaProducerService kafkaProducerService;
 
-    public Transaction processTransaction(TransactionRequest request) {
+    public Transaction processTransaction(TransactionRequest request, String authHeader) {
         double amount = request.getAmount();
         TransactionType type = request.getType();
 
         if (amount <= 0) throw new IllegalArgumentException("Amount must be positive");
 
         switch (type) {
-            case DEPOSIT -> accountClient.adjustBalance(request.getSourceAccountId(), amount);
+            case DEPOSIT -> accountClient.adjustBalance(request.getSourceAccountNumber(), amount, authHeader);
 
             case WITHDRAWAL -> {
-                double currentBalance = accountClient.getBalance(request.getSourceAccountId());
+                double currentBalance = accountClient.getBalance(request.getSourceAccountNumber(), authHeader);
                 if (currentBalance < amount) throw new RuntimeException("Insufficient funds");
-                accountClient.adjustBalance(request.getSourceAccountId(), -amount);
+                accountClient.adjustBalance(request.getSourceAccountNumber(), -amount, authHeader);
             }
 
             case TRANSFER -> {
-                double sourceBalance = accountClient.getBalance(request.getSourceAccountId());
+                double sourceBalance = accountClient.getBalance(request.getSourceAccountNumber(), authHeader);
                 if (sourceBalance < amount) {
+                    Long userId = accountClient.getUserIdByAccountNumber(request.getSourceAccountNumber(), authHeader);
+
                     TransferFailedEvent event = new TransferFailedEvent(
-                            request.getSourceAccountId(),
+                            userId,
                             request.getRecipient(),
                             "Insufficient funds"
                     );
                     kafkaProducerService.publishTransferFailed(event);
                     throw new RuntimeException("Insufficient funds");
                 }
-                accountClient.adjustBalance(request.getSourceAccountId(), -amount);
-                accountClient.adjustBalance(request.getDestinationAccountId(), amount);
+                accountClient.adjustBalance(request.getSourceAccountNumber(), -amount, authHeader);
+                accountClient.adjustBalance(request.getDestinationAccountNumber(), amount, authHeader);
             }
         }
 
         Transaction transaction = new Transaction();
-        transaction.setSourceAccountId(request.getSourceAccountId());
-        transaction.setDestinationAccountId(request.getDestinationAccountId());
+        transaction.setSourceAccountNumber(request.getSourceAccountNumber());
+        transaction.setDestinationAccountNumber(request.getDestinationAccountNumber());
         transaction.setAmount(amount);
         transaction.setType(type);
         transaction.setTimestamp(LocalDateTime.now());
         transaction.setDescription(request.getDescription());
 
         Transaction savedTransaction = transactionRepository.save(transaction);
-
+        Long userId = accountClient.getUserIdByAccountNumber(request.getSourceAccountNumber(), authHeader);
         TransactionCompletedEvent event = new TransactionCompletedEvent(
-                request.getSourceAccountId(),
+                userId,
                 request.getRecipient(),
                 amount,
-                generateSuccessMessage(type, amount, request.getDestinationAccountId())
+                generateSuccessMessage(type, amount, request.getDestinationAccountNumber())
         );
         kafkaProducerService.publishTransactionCompleted(event);
 
         return savedTransaction;
     }
 
-    private String generateSuccessMessage(TransactionType type, double amount, Long destinationId) {
+    private String generateSuccessMessage(TransactionType type, double amount, String destinationId) {
         return switch (type) {
             case DEPOSIT -> "Your deposit of ₹" + amount + " was successful.";
             case WITHDRAWAL -> "Your withdrawal of ₹" + amount + " was successful.";
