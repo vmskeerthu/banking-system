@@ -36,7 +36,7 @@ public class SecurityFilterConfig {
         http.csrf(csrf -> csrf.disable());
 
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/users/register", "/api/users/login", "/api/accounts/*/user-id").permitAll()
+                .requestMatchers("/api/users/register", "/api/users/login", "/api/accounts/*/user-id","/api/users/email-by-account/**").permitAll()
                 .anyRequest().authenticated()
         );
 
@@ -74,13 +74,13 @@ public class SecurityFilterConfig {
                     } catch (JwtException ex) {
                         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
-                            response.getWriter().write("Invalid or expired token");
+                        response.getWriter().write("Invalid or expired token");
 
                         return;
                     }
                 }
 
-                    filterChain.doFilter(request, response);
+                filterChain.doFilter(request, response);
             }
         };
     }

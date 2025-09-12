@@ -19,7 +19,9 @@ public class SecurityConfig {
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         http.csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/api/users/login", "/api/users/register").permitAll()
+                        .pathMatchers("/api/users/login", "/api/users/register", "/v3/api-docs/**",
+                                "/swagger-ui.html",
+                                "/swagger-ui/**","/api/users/email-by-account/**").permitAll()
                         .anyExchange().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 ->

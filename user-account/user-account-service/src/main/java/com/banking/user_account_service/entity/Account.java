@@ -28,8 +28,10 @@ public class Account {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(nullable = false, unique = true, length = 15)
-    private String accountNumber;
+//    @Column(nullable = false, unique = true, length = 15)
+//    private String accountNumber;
+@Column(name = "account_number", nullable = false, unique = true, length = 15)
+private String accountNumber;
 
     @Column(nullable = false)
     @jakarta.validation.constraints.DecimalMin(value = "0.0", inclusive = true, message = "Balance cannot be negative")

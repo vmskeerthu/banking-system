@@ -24,12 +24,6 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-//    @Column(nullable = true)
-//    private Long sourceAccountId;
-//
-//    @Column(nullable = true)
-//    private Long destinationAccountId;
-
 @Column(length = 15,nullable = true)
 private String sourceAccountNumber;
 

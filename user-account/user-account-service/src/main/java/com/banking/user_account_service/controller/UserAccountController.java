@@ -6,12 +6,15 @@ import com.banking.user_account_service.DTO.BalanceUpdateRequest;
 import com.banking.user_account_service.DTO.LoginRequest;
 import com.banking.user_account_service.entity.Account;
 import com.banking.user_account_service.entity.User;
+import com.banking.user_account_service.repository.AccountRepository;
 import com.banking.user_account_service.service.AccountService;
 import com.banking.user_account_service.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 /**
  * @author Keerthana
@@ -22,7 +25,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserAccountController {
     private final UserService userService;
     private final AccountService accountService;
-
+    private final AccountRepository accountRepository;
     @PostMapping("/users/register")
     public ResponseEntity<User> register(@RequestBody User request){
         User createdUser=userService.registerUser(request);
@@ -56,6 +59,18 @@ public class UserAccountController {
 
         Account updatedAccount = accountService.updateBalanceByNumber(accountNumber,request.getDelta());
         return ResponseEntity.ok(updatedAccount);
+    }
+
+
+    @GetMapping("users/email-by-account/{accountNumber}")
+    public ResponseEntity<?> getEmailByAccountNumber(@PathVariable String accountNumber) {
+        try {
+            Account account = accountService.getAccountByNumber(accountNumber);
+            String email = account.getUser().getEmail();
+            return ResponseEntity.ok(Map.of("email", email));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        }
     }
 
 
